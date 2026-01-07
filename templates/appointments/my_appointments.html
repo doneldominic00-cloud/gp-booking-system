@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}My Appointments{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>My Appointments</h2>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    
+    <a href="{% url 'accounts:book_appointment' %}" class="btn btn-primary mb-3">
+        Book New Appointment
+    </a>
+    
+    {% if appointments %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Doctor</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appointment in appointments %}
+                        <tr>
+                            <td>{{ appointment.appointment_date|date:"M d, Y g:i A" }}</td>
+                            <td>Dr. {{ appointment.doctor.get_full_name }}</td>
+                            <td>{{ appointment.reason|default:"N/A" }}</td>
+                            <td>
+                                <span class="badge bg-{% if appointment.status == 'scheduled' %}primary{% elif appointment.status == 'confirmed' %}success{% elif appointment.status == 'completed' %}secondary{% else %}danger{% endif %}">
+                                    {{ appointment.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if appointment.status in 'scheduled,confirmed' %}
+                                    <a href="{% url 'accounts:cancel_appointment' appointment.id %}" 
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                        Cancel
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>You have no appointments.</p>
+    {% endif %}
+</div>
+{% endblock %}

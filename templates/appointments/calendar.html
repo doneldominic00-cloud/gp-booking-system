@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-3">Book an Appointment (Calendar)</h2>
+<p class="text-muted">Click a slot to book it.</p>
+
+<div id="calendar" class="bg-white p-3 rounded shadow-sm"></div>
+
+<!-- FullCalendar (CDN) -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<script>
+  // CSRF helper for Django POST
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie("csrftoken");
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const calendarEl = document.getElementById("calendar");
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: "dayGridMonth",
+      height: "auto",
+      headerToolbar: {
+        left: "prev,next today",
+        center: "title",
+        right: "dayGridMonth,timeGridWeek,timeGridDay"
+      },
+      eventTimeFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false  // Use 24-hour format
+      },
+      slotLabelFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false  // Use 24-hour format for time slots
+      },
+
+      events: function(info, successCallback, failureCallback) {
+        const url = "{% url 'appointments:slots_feed' %}";
+        console.log('Fetching events from:', url);
+        
+        fetch(url + '?start=' + info.startStr + '&end=' + info.endStr)
+          .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+          })
+          .then(data => {
+            console.log('Events received:', data.length);
+            console.log('Sample event:', data[0]);
+            successCallback(data);
+          })
+          .catch(error => {
+            console.error('Error fetching events:', error);
+            failureCallback(error);
+          });
+      },
+
+      eventClick: async function(info) {
+        const slotId = info.event.id;
+        const title = info.event.title;
+        const start = info.event.start;
+
+        console.log('Clicked slot:', slotId);
+
+        const ok = confirm(`Book this slot?\n\n${title}\n${start}`);
+        if (!ok) return;
+
+        try {
+          const res = await fetch(`/appointments/api/book/${slotId}/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrftoken
+            },
+            body: JSON.stringify({})
+          });
+
+          const data = await res.json();
+          console.log('Booking response:', data);
+
+          if (!res.ok || !data.ok) {
+            alert(data.error || "Could not book slot.");
+            return;
+          }
+
+          alert("Booked successfully!");
+          calendar.refetchEvents();
+        } catch (e) {
+          console.error('Booking error:', e);
+          alert("Network error while booking.");
+        }
+      },
+      
+      eventDidMount: function(info) {
+        console.log('Event mounted:', info.event.title);
+      }
+    });
+
+    calendar.render();
+    console.log('Calendar rendered');
+  });
+</script>
+
+{% endblock %}
