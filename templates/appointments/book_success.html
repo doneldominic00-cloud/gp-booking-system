@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="alert alert-success">
+  Appointment confirmed with {{ appointment.gp }} on {{ appointment.date }} at {{ appointment.start_time }}.
+</div>
+<a class="btn btn-secondary" href="{% url 'appointments:available_slots' %}">Back to slots</a>
+{% endblock %}

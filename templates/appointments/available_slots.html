@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Available Appointment Slots</h2>
+<table class="table table-striped">
+  <thead><tr><th>GP</th><th>Date</th><th>Start</th><th>End</th><th></th></tr></thead>
+  <tbody>
+    {% for s in slots %}
+    <tr>
+      <td>{{ s.gp }}</td>
+      <td>{{ s.date }}</td>
+      <td>{{ s.start_time }}</td>
+      <td>{{ s.end_time }}</td>
+      <td><a class="btn btn-primary btn-sm" href="{% url 'appointments:book_appointment' s.id %}">Book</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No available slots</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
