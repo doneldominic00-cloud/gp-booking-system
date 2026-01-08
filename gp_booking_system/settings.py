@@ -77,9 +77,16 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'en-gb'
-TIME_ZONE = 'Europe/London'
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'Europe/London'  # Change this to your timezone
+# For US Eastern: 'America/New_York'
+# For US Pacific: 'America/Los_Angeles'
+# For Europe/London: 'Europe/London'
+# Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
 USE_I18N = True
+
 USE_TZ = True
 
 # Static files

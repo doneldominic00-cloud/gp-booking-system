@@ -16,6 +16,10 @@
             
             <form method="post">
                 {% csrf_token %}
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
                 
                 <div class="mb-3">
                     <label for="first_name" class="form-label">First Name</label>
@@ -46,7 +50,6 @@
                     <label for="user_type" class="form-label">Register as</label>
                     <select class="form-select" id="user_type" name="user_type">
                         <option value="patient" selected>Patient</option>
-                        <option value="doctor">Doctor</option>
                     </select>
                 </div>
                 

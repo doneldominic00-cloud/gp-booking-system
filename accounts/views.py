@@ -22,6 +22,7 @@ def signup(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
+        username = request.POST.get('username')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         user_type = request.POST.get('user_type', 'patient')
@@ -36,6 +37,7 @@ def signup(request):
         
         try:
             user = User.objects.create_user(
+                username=username,
                 email=email,
                 password=password,
                 first_name=first_name,
