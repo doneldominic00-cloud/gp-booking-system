@@ -1,34 +1,32 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.http import JsonResponse
-from django.urls import reverse
+from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_date
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 
 from .models import GPAvailability, Appointment
 from .utils import is_slot_available
-from django.contrib.auth import get_user_model
 
-User = get_user_model()
 
 def home(request):
+    """Homepage view"""
     return render(request, 'home.html')
 
 
 @login_required
 def calendar_view(request):
-    """Display the calendar interface"""
+    """Display the calendar interface for booking appointments"""
     return render(request, 'appointments/calendar.html')
 
 
 @login_required
 def slots_feed(request):
     """JSON feed of available appointment slots for FullCalendar"""
-    # Get date range from request
     start_str = request.GET.get('start')
     end_str = request.GET.get('end')
     
@@ -39,7 +37,6 @@ def slots_feed(request):
         start_date = timezone.now().date()
         end_date = start_date + timedelta(days=30)
     
-    # Get available slots from GPAvailability model
     available_slots = GPAvailability.objects.filter(
         is_blocked=False,
         date__gte=start_date,
@@ -48,7 +45,6 @@ def slots_feed(request):
     
     events = []
     for slot in available_slots:
-        # Combine date and time
         slot_datetime = timezone.make_aware(
             datetime.combine(slot.date, slot.start_time)
         )
@@ -56,10 +52,8 @@ def slots_feed(request):
             datetime.combine(slot.date, slot.end_time)
         )
         
-        # Get doctor name and clean it up
         doctor_name = str(slot.gp).replace('Dr. ', '')
         
-        # Only show future slots
         if slot_datetime > timezone.now():
             events.append({
                 'id': str(slot.id),
@@ -81,7 +75,7 @@ def slots_feed(request):
 @csrf_protect
 @login_required
 def book_slot_api(request, slot_id):
-    """Books a slot via AJAX. Returns JSON success/error."""
+    """Books a slot via AJAX. Returns JSON success/error"""
     try:
         slot = get_object_or_404(GPAvailability, id=slot_id, is_blocked=False)
     except:
@@ -90,7 +84,6 @@ def book_slot_api(request, slot_id):
     if not is_slot_available(slot.gp, slot.date, slot.start_time, slot.end_time):
         return JsonResponse({'ok': False, 'error': 'Slot already booked.'}, status=409)
 
-    # Combine date and time into appointment_date
     appointment_datetime = timezone.make_aware(
         datetime.combine(slot.date, slot.start_time)
     )

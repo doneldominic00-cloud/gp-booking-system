@@ -52,20 +52,15 @@
 
       events: function(info, successCallback, failureCallback) {
         const url = "{% url 'appointments:slots_feed' %}";
-        console.log('Fetching events from:', url);
         
         fetch(url + '?start=' + info.startStr + '&end=' + info.endStr)
           .then(response => {
-            console.log('Response status:', response.status);
             return response.json();
           })
           .then(data => {
-            console.log('Events received:', data.length);
-            console.log('Sample event:', data[0]);
             successCallback(data);
           })
           .catch(error => {
-            console.error('Error fetching events:', error);
             failureCallback(error);
           });
       },
@@ -74,8 +69,6 @@
         const slotId = info.event.id;
         const title = info.event.title;
         const start = info.event.start;
-
-        console.log('Clicked slot:', slotId);
 
         // Format date and time without timezone text
         const dateStr = start.toLocaleDateString('en-GB', { 
@@ -104,7 +97,6 @@
           });
 
           const data = await res.json();
-          console.log('Booking response:', data);
 
           if (!res.ok || !data.ok) {
             alert(data.error || "Could not book slot.");
@@ -114,18 +106,12 @@
           alert("Booked successfully!");
           calendar.refetchEvents();
         } catch (e) {
-          console.error('Booking error:', e);
           alert("Network error while booking.");
         }
-      },
-      
-      eventDidMount: function(info) {
-        console.log('Event mounted:', info.event.title);
       }
     });
 
     calendar.render();
-    console.log('Calendar rendered');
   });
 </script>
 
