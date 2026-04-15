@@ -103,6 +103,12 @@ AUTH_USER_MODEL = 'accounts.User'
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@gpbooking.local')
 
+# Anthropic API
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
+
+# Groq API
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+
 # Cron jobs
 CRONJOBS = [
     ('0 * * * *', 'appointments.management.commands.send_reminders.Command.handle'),
