@@ -8,74 +8,33 @@ from appointments.models import Appointment
 
 
 class Command(BaseCommand):
-    help = 'Send reminder emails to patients with confirmed appointments in the next 24 hours'
+    help = 'Send reminder emails for appointments in the next 24 hours'
 
     def handle(self, *args, **options):
         now = timezone.now()
-        window_start = now + timedelta(hours=23, minutes=30)
-        window_end = now + timedelta(hours=24, minutes=30)
-
         upcoming = Appointment.objects.filter(
             status='confirmed',
-            appointment_date__gte=window_start,
-            appointment_date__lte=window_end,
+            appointment_date__gte=now + timedelta(hours=23, minutes=30),
+            appointment_date__lte=now + timedelta(hours=24, minutes=30),
         ).select_related('patient', 'doctor')
 
-        if not upcoming.exists():
-            self.stdout.write('No reminders to send.')
-            return
-
-        sent = 0
-        failed = 0
-
         for appointment in upcoming:
-            patient = appointment.patient
-            patient_email = patient.email
-
-            if not patient_email:
-                self.stderr.write(
-                    f'Skipping appointment {appointment.id}: patient {patient.get_full_name()} has no email address.'
-                )
-                failed += 1
+            email = appointment.patient.email
+            if not email:
                 continue
 
-            doctor_name = f'Dr. {appointment.doctor.get_full_name()}'
-            appt_time = timezone.localtime(appointment.appointment_date)
-            formatted_time = appt_time.strftime('%A, %d %B %Y at %H:%M')
-
-            subject = 'Reminder: Your GP appointment tomorrow'
-            message = (
-                f'Dear {patient.get_full_name()},\n\n'
-                f'This is a reminder that you have a confirmed appointment with {doctor_name} '
-                f'on {formatted_time}.\n\n'
-                f'Reason: {appointment.reason or "Not specified"}\n\n'
-                f'Please arrive a few minutes early. If you need to cancel or reschedule, '
-                f'contact the surgery as soon as possible.\n\n'
-                f'Kind regards,\n'
-                f'The GP Booking System'
+            appt_time = timezone.localtime(appointment.appointment_date).strftime('%d %B %Y at %H:%M')
+            send_mail(
+                subject='Reminder: Your GP appointment tomorrow',
+                message=(
+                    f'Hi {appointment.patient.first_name},\n\n'
+                    f'You have an appointment with Dr. {appointment.doctor.get_full_name()} on {appt_time}.\n\n'
+                    f'Please arrive a few minutes early.\n\n'
+                    f'GP Booking System'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=True,
             )
 
-            try:
-                send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[patient_email],
-                    fail_silently=False,
-                )
-                sent += 1
-                self.stdout.write(
-                    f'Reminder sent to {patient.get_full_name()} <{patient_email}> '
-                    f'for appointment on {formatted_time}.'
-                )
-            except Exception as e:
-                failed += 1
-                self.stderr.write(
-                    f'Failed to send reminder for appointment {appointment.id}: {e}'
-                )
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f'Done. {sent} reminder(s) sent, {failed} failed.'
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f'Reminders sent for {upcoming.count()} appointment(s).'))
