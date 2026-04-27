@@ -76,14 +76,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Europe/London'  # Change this to your timezone
-# For US Eastern: 'America/New_York'
-# For US Pacific: 'America/Los_Angeles'
-# For Europe/London: 'Europe/London'
-# Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+TIME_ZONE = 'Europe/London'  
 
 USE_I18N = True
 
@@ -102,9 +97,6 @@ AUTH_USER_MODEL = 'accounts.User'
 # Email configuration
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@gpbooking.local')
-
-# Anthropic API
-ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 
 # Groq API
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
