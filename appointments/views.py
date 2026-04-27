@@ -97,10 +97,17 @@ def book_slot_api(request, slot_id):
         datetime.combine(slot.date, slot.start_time)
     )
 
+    try:
+        body = json.loads(request.body)
+        reason = body.get('reason', '').strip()
+    except (json.JSONDecodeError, AttributeError):
+        reason = ''
+
     appt = Appointment.objects.create(
         patient=request.user,
         doctor=slot.gp.user,
         appointment_date=appointment_datetime,
+        reason=reason,
         status='confirmed'
     )
 

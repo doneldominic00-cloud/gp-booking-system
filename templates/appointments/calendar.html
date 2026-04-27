@@ -6,6 +6,27 @@
 
 <div id="calendar" class="bg-white p-3 rounded shadow-sm"></div>
 
+<!-- Booking Modal -->
+<div class="modal fade" id="reasonBox" tabindex="-1" aria-labelledby="reasonBoxLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reasonBoxLabel">Confirm Appointment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="modal-slot-info" class="mb-3"></p>
+        <label for="booking-reason" class="form-label">Reason for visit <span class="text-muted">(optional)</span></label>
+        <textarea id="booking-reason" class="form-control" rows="3" maxlength="500" placeholder="e.g. persistent headache, annual check-up…"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirm-booking-btn">Book Appointment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- FullCalendar (CDN) -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
@@ -65,49 +86,48 @@
           });
       },
 
-      eventClick: async function(info) {
+      eventClick: function(info) {
         const slotId = info.event.id;
         const title = info.event.title;
         const start = info.event.start;
 
-        // Format date and time without timezone text
-        const dateStr = start.toLocaleDateString('en-GB', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        const dateStr = start.toLocaleDateString('en-GB', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
-        const timeStr = start.toLocaleTimeString('en-GB', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false
+        const timeStr = start.toLocaleTimeString('en-GB', {
+          hour: '2-digit', minute: '2-digit', hour12: false
         });
 
-        const ok = confirm(`Book this appointment?\n\n${title}\n${dateStr}\n${timeStr}`);
-        if (!ok) return;
+        document.getElementById('modal-slot-info').textContent = `${title} — ${dateStr} at ${timeStr}`;
+        document.getElementById('booking-reason').value = '';
 
-        try {
-          const res = await fetch(`/appointments/api/book/${slotId}/`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": csrftoken
-            },
-            body: JSON.stringify({})
-          });
+        const modal = new bootstrap.Modal(document.getElementById('reasonBox'));
+        modal.show();
 
-          const data = await res.json();
+        document.getElementById('confirm-booking-btn').onclick = async function() {
+          const reason = document.getElementById('booking-reason').value.trim();
+          modal.hide();
 
-          if (!res.ok || !data.ok) {
-            alert(data.error || "Could not book slot.");
-            return;
+          try {
+            const res = await fetch(`/appointments/api/book/${slotId}/`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
+              body: JSON.stringify({ reason: reason })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.ok) {
+              alert(data.error || "Could not book slot.");
+              return;
+            }
+
+            alert("Booked successfully!");
+            calendar.refetchEvents();
+          } catch (e) {
+            alert("Network error while booking.");
           }
-
-          alert("Booked successfully!");
-          calendar.refetchEvents();
-        } catch (e) {
-          alert("Network error while booking.");
-        }
+        };
       }
     });
 
